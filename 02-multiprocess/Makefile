@@ -1,0 +1,28 @@
+AS86 = as86 -0 -a
+LD86 = ld86 -0
+AS = as
+LD = ld
+LDFLAGS = -m elf_i386 -Ttext 0 -e startup_32 -s -x -M
+
+all: Image
+
+Image: boot system
+	dd bs=32 if=boot of=Image skip=1
+	objcopy -O binary system head
+	cat head >> Image
+
+boot:	boot.s
+	$(AS86) -o boot.o boot.s
+	$(LD86) -s -o boot boot.o
+
+head.o : head.s
+	as --32 -o head.o head.s
+
+system:	head.o 
+	$(LD) $(LDFLAGS) head.o  -o system > System.map
+
+clean: cleanless
+	rm -f Image boot head *.o
+
+cleanless:
+	rm -f boot head *.o system System.map
